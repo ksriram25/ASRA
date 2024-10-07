@@ -1,0 +1,587 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE rfc>
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+<?rfc strict="yes" ?>
+<?rfc toc="yes"?>
+<?rfc tocdepth="4"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes" ?>
+<?rfc compact="yes" ?>
+<?rfc subcompact="no" ?>
+
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude"
+     category="std"
+     docName="draft-sriram-sidrops-asra-profile-00"
+     ipr="trust200902"
+     consensus="true"
+     submissionType="IETF">
+
+  <front>
+    <title abbrev="RPKI ASRA Profile">
+      A Profile for Autonomous System Relationship Authorization (ASRA)
+    </title>
+
+    <author initials="N." surname="Geng" fullname="Nan Geng">
+      <organization>Huawei</organization>
+      <address>
+        <postal>
+          <city>Beijing</city>
+          <country>China</country>
+        </postal>
+        <email>gengnan@huawei.com</email>
+      </address>
+    </author>
+    <author initials="K." surname="Sriram" fullname="Kotikalapudi Sriram">
+      <organization>NIST</organization>
+      <address>
+        <postal>
+          <city>Gaithersburg, MD 20899</city>
+          <country>United States of America</country>
+        </postal>
+        <email>ksriram@nist.gov</email>
+      </address>
+    </author>
+    <author initials="M." surname="Huang" fullname="Mingqing Huang">
+      <organization>Zhongguancun Laboratory</organization>
+      <address>
+        <postal>
+          <city>Beijing</city>
+          <country>China</country>
+        </postal>
+        <email>huangmq@mail.zgclab.edu.cn</email>
+      </address>
+    </author>
+
+    <date/>
+    <keyword>BGP security</keyword>
+    <keyword>Route leak</keyword>
+    <keyword>AS path verification</keyword>
+    <keyword>BGP hijack</keyword>
+    <keyword>RPKI</keyword>
+    <abstract>
+      <t>
+        This document defines a Cryptographic Message Syntax (CMS) protected content type for Autonomous System Relationship Authorization (ASRA) objects for use with the Resource Public Key Infrastructure (RPKI).
+        An ASRA is a digitally signed object through which the issuer (the holder of an Autonomous System identifier), can authorize one or more other Autonomous Systems (ASes) as its customers and lateral peers.
+        When validated, an ASRA's eContent can be used for detection and mitigation of BGP AS path manipulation attacks together with Autonomous System Provider Authorization (ASPA).
+        ASRA is complementary to ASPA.
+      </t>
+    </abstract>
+
+    <note title="Requirements Language">
+      <t>
+                The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+                "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+                "OPTIONAL" in this document are to be interpreted as described in
+                BCP 14 <xref target="RFC2119"/> <xref target="RFC8174"/> when, and
+                only when, they appear in all capitals, as shown here.
+      </t>
+    </note>
+
+  </front>
+
+  <middle>
+    <section title="Introduction" anchor="intro">
+      <t>
+        This document defines a Cryptographic Message Syntax (CMS) protected content type for Autonomous System Relationship Authorization (ASRA) objects for use with the Resource Public Key Infrastructure (RPKI) <xref target="RFC6480"/>.
+        An ASRA is a digitally signed object through which the issuer (the holder of an Autonomous System identifier), can authorize one or more other Autonomous Systems (ASes) as its customers and lateral peers.
+        When validated, an ASRA's eContent can be used for detection and mitigation of BGP AS path manipulation attacks together with Autonomous System Provider Authorization (ASPA) <xref target="I-D.ietf-sidrops-aspa-profile"/> <xref target="I-D.ietf-sidrops-aspa-verification"/>.
+        ASRA-based verification is complementary to ASPA-based verification.
+      </t>
+<!--
+      <t>
+        The primary purpose of the Resource Public Key Infrastructure (RPKI) is to improve routing security <xref target="RFC6480"/>.
+        As part of this infrastructure, a mechanism is needed to facilitate holders of Autonomous System (AS) identifiers in their capacity as Customer to authorize other ASes as their Provider(s).
+        A Provider AS (PAS) is a network that:
+        <list style="letters">
+          <t>offers its customers outbound (customer to Internet) data traffic connectivity and/or</t>
+          <t>further propagates in all directions (towards providers, lateral peers, and customers) any BGP Updates that the customer may send.</t>
+        </list>
+        The digitally signed Autonomous System Relationship Authorization (ASRA) object described in this document provides the above-mentioned authorization mechanism.
+      </t>
+-->
+      <t>
+        BGP relationships that an Autonomous System (AS) may have with eBGP neighbors are discussed in <xref target="I-D.ietf-sidrops-aspa-verification"/>.
+        ASPA object is used to register the set of provider ASes that the subject (signing) AS has.
+        ASRA object is used to register the set of ASes with which the subject AS has customer and/or lateral peering relationships.
+      </t>
+      <t>
+        There are three subcategories of ASRAs defined: ASRA1, ASRA2, and ASRA3.
+        They are distinguished by a subcategory field by setting its value to 1, 2, or 3, respectively.
+        ASRA1 and ASRA2 are used to register the lists of customers and lateral peers, respectively.
+        Alternatively, if the subject AS does not wish to separately disclose customers and lateral peers, it MAY choose to register an ASRA3 to register the combined list of customers and lateral peers.
+        The details of ASRA registration requirements for ASes in different scenarios are specified in Section 3 of [I-D.sriram-sidrops-asra-verification].
+        In addition, the procedures for verifying AS_PATHs in BGP UPDATE messages using validated ASRA objects (in conjunction with the ASPA objects) are described in that document.   
+      </t>
+      <t>
+        This CMS <xref target="RFC5652"/> protected content type definition conforms to the <xref target="RFC6488"/> template for RPKI signed objects.
+        In accordance with Section 4 of <xref target="RFC6488"/>, this document defines:
+        <list style="numbers">
+          <t>
+            The object identifier (OID) that identifies the ASRA signed object.
+            This OID appears in the eContentType field of the encapContentInfo object as well as the content-type signed attribute within the signerInfo structure.
+          </t>
+          <t>
+            The ASN.1 syntax for the ASRA content, which is the payload signed by the signer (subject) AS.
+            The ASRA content is encoded using the ASN.1 <xref target="X.680"/> Distinguished Encoding Rules (DER) <xref target="X.690"/>.
+          </t>
+          <t>
+            The steps required to validate an ASRA beyond the validation steps specified in <xref target="RFC6488"/>.
+          </t>
+        </list>
+      </t>
+    </section>
+
+    <section title="ASRA Content Type" anchor="content-type">
+      <t>
+        The content-type for an ASRA is defined as id-ct-ASRA, which has the numerical value of 1.2.840.113549.1.9.16.1.TBD.
+        This OID MUST appear both within the eContentType in the encapContentInfo structure as well as the content-type signed attribute within the signerInfo structure (see <xref target="RFC6488"/>).
+      </t>
+    </section>
+
+    <section title="ASRA eContent" anchor="content">
+      <t>
+        The content of an ASRA identifies the signer (subject) AS as well as the Set of  ASes that are authorized by the signer AS to be its customers and/or lateral peers.
+      </t>
+      <t>
+        A user registering ASRA(s) must be cognizant of Section 3 of [I-D.sriram-sidrops-asra-verification] and the user (or their software tool) must comply with the ASRA registration recommendations in that section.
+        In the case of the transition process between different CA registries, the ASRA records SHOULD be kept identical in all registries in terms of their authorization contents.
+      </t>
+
+      <t>
+        The eContent of an ASRA is an instance of ASRelationshipAttestation, formally defined by the following ASN.1 <xref target="X.680"/> module:
+      </t>
+        <figure>
+<artwork type="text">
+
+RPKI-ASRA-2024
+  { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1)
+     pkcs-9(9) smime(16) modules(0) 
+        id-mod-rpki-asra-2024(TBD) }
+
+DEFINITIONS EXPLICIT TAGS ::=
+BEGIN
+
+IMPORTS
+  CONTENT-TYPE
+  FROM CryptographicMessageSyntax-2010  -- RFC 6268
+    { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1)
+       pkcs-9(9) smime(16) modules(0) id-mod-cms-2009(58) } ;
+
+id-ct-ASRA OBJECT IDENTIFIER ::=
+  { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1)
+    pkcs-9(9) id-smime(16) id-ct(1) asra(TBD) }
+
+ct-ASRA CONTENT-TYPE ::=
+  { TYPE ASRelationshipAttestation IDENTIFIED BY id-ct-ASRA }
+
+ASRelationshipAttestation ::= SEQUENCE {
+  version [0]   INTEGER DEFAULT 0,
+  SignerASID  ASID,
+  ASRAsubcategory  subcategory,
+  Relationships     RelationshipASSet }
+  
+ASID ::= INTEGER (0..4294967295)
+  
+subcategory ::= OCTET STRING (SIZE (1))
+
+RelationshipASSet ::= SEQUENCE (SIZE(1..MAX)) OF ASID
+
+END
+
+</artwork>
+        </figure>
+      <t>
+        Note that this content appears as the eContent within the encapContentInfo as specified in <xref target="RFC6488"/>.
+      </t>
+
+      <section title="Version">
+        <t>
+          The version number of the ASRelationshipAttestation that complies with this specification MUST be 0 and MUST be explicitly encoded.
+        </t>
+      </section>
+
+      <section title="SignerASID">
+        <t>
+          The SignerASID field contains the AS number of the Autonomous System that is the authorizing entity (Signer AS).
+        </t>
+      </section>
+
+      <section title="ASRAsubcategory">
+        <t>
+          ASRAsubcategory can have values 0 to 255. The values 1, 2, and 3 are assigned to represent ASRA1, ASRA2, and ASRA3, respectively. 
+          As explained in <xref target="intro"/>, ASRA1 means that the Relationships (see <xref target="relationships"/>) field contains ASIDs of only the customer ASes of the Signer AS; 
+          ASRA2 means that the Relationships field contains ASIDs of only the lateral peer ASes; 
+          ASRA3 means that the Relationships field contains the combined list of ASIDs of customer and lateral peer ASes.
+          Section 3 of [I-D.sriram-sidrops-asra-verification] for details of registration requirements for ASRA1, ASRA2, and ASRA3.
+        </t>
+      </section>
+
+      <section title="Relationships" anchor="relationships">
+        <t>
+          Each element contained in the Relationships field is an instance of ASID.
+          The Relationships field contains the listing of ASIDs of ASes that are authorized as customers and/or lateral peers (per ASRA1, ASRA2, and ASRA3 subcategory definitions). 
+        </t>
+        <t>
+          In addition to the constraints described by the formal ASN.1 definition, the contents of the Relationships field MUST satisfy the following constraints:
+        <list style="symbols">
+          <t>
+            The SignerASID value MUST NOT appear in any ASID in the Relationships field.
+          </t>
+          <t>
+            The elements of Relationships MUST be ordered in ascending numerical order (ASIDs).
+          </t>
+          <t>
+            Each value of ASID MUST be unique (with respect to the other elements of Relationships).
+          </t>
+          </list>
+        </t>
+
+      </section>
+    </section>
+
+    <section title="ASRA Validation" anchor="validation">
+      <t>
+        Before a relying party can use an ASRA to validate a routing announcement, the relying party MUST first validate the ASRA object itself.
+        To validate an ASRA, the relying party MUST perform all the validation checks specified in <xref target="RFC6488"/> as well as the following additional ASRA-specific validation steps.
+        <list style="symbols">
+          <t>
+            The Autonomous System Identifier Delegation Extension <xref target="RFC3779"/> MUST be present in the end-entity (EE) certificate (contained within the ASRA), and the SignerASID in the ASRA eContent MUST be contained within the set of AS numbers specified by the EE certificate's Autonomous System Identifier Delegation Extension.
+          </t>
+          <t>
+            The EE certificate's Autonomous System Identifier Delegation Extension MUST NOT contain any "inherit" elements.
+          </t>
+          <t>
+            The IP Address Delegation Extension <xref target="RFC3779"/> MUST be absent.
+          </t>
+        </list>
+      </t>
+    </section>
+    <section anchor="IANA" title="IANA Considerations">
+      <section title="SMI Security for S/MIME Module Identifier registry">
+        <t>
+          Please add the id-mod-rpki-asra-2024 to the SMI Security for S/MIME Module Identifier (1.2.840.113549.1.9.16.0) registry (https://www.iana.org/assignments/smi-numbers/smi-numbers.xml#security-smime-0) as follows:
+        </t>
+        <figure>
+<artwork type="text">
+    Decimal   | Description                   | Specification 
+    ----------------------------------------------------------
+    TBD2      | id-mod-rpki-asra-2024         | [RFC-to-be]   
+</artwork>
+        </figure>
+    </section>
+    <section title="SMI Security for S/MIME CMS Content Type registry">
+      <t>
+        Please add the ASRA to the SMI Security for S/MIME CMS Content Type (1.2.840.113549.1.9.16.1) registry (https://www.iana.org/assignments/smi-numbers/smi-numbers.xml#security-smime-1) as follows:
+      </t>
+      <figure>
+<artwork type="text">
+    Decimal   | Description                   | Specification
+    ----------------------------------------------------------
+    TBD       | id-ct-ASRA                    | [RFC-to-be]
+</artwork>
+      </figure>
+    </section>
+    <section title="RPKI Signed Object registry">
+      <t>
+        Please add Autonomous System Relationship Authorization to the RPKI Signed Object registry (https://www.iana.org/assignments/rpki/rpki.xhtml#signed-objects) as follows:
+      </t>
+      <figure>
+<artwork type="text">
+Name                       | OID                         | Specification
+-------------------------------------------------------------------------
+Autonomous System          | 1.2.840.113549.1.9.16.1.TBD | [RFC-to-be]
+Relationship Authorization |                             |
+------------------------------------------------------------------------
+</artwork>
+      </figure>
+    </section>
+    <section title="RPKI Repository Name Scheme registry">
+      <t>
+        Please add an item for the Autonomous System Relationship Authorization file extension to the "RPKI Repository Name Scheme" registry created by <xref target="RFC6481"/> as follows:
+      </t>
+      <figure>
+        <artwork>
+<![CDATA[
+Filename  |
+Extension | RPKI Object                                  | Reference   
+-----------------------------------------------------------------------
+     .asa | Autonomous System Relationship Authorization | [RFC-to-be] 
+]]>
+                </artwork>
+      </figure>
+    </section>
+    <section title="Media Type registry">
+      <t>
+        The IANA is requested to register the media type application/rpki-asra in the "Media Type" registry as follows:
+      </t>
+      <artwork>
+<![CDATA[
+   Type name: application
+   Subtype name: rpki-asra
+   Required parameters: N/A
+   Optional parameters: N/A
+   Encoding considerations: binary
+   Security considerations: Carries an RPKI ASRA [RFC-to-be].
+       This media type contains no active content. See
+       Section xxx of [RFC-to-be] for further information.
+   Interoperability considerations: None
+   Published specification: [RFC-to-be]
+   Applications that use this media type: RPKI operators
+   Additional information:
+     Content: This media type is a signed object, as defined
+         in [RFC6488], which contains a payload of a list of
+         AS identifiers (ASIDs) as defined in [RFC-to-be].
+     Magic number(s): None
+     File extension(s): .asa
+     Macintosh file type code(s):
+   Person & email address to contact for further information:
+     Nan Geng <gengnan@huawei.com>
+   Intended usage: COMMON
+   Restrictions on usage: None
+   Change controller: IETF
+]]>
+        </artwork>
+      </section>
+    </section>
+
+    <section anchor="Security" title="Security Considerations">
+      <t>
+        The security considerations of <xref target="RFC6481"/>, <xref target="RFC6485"/>, and <xref target="RFC6488"/> also apply to ASRAs.
+      </t>
+    </section>
+<!--
+    <section removeInRFC="true">
+      <name>Implementation status</name>
+      <t>
+        This section records the status of known implementations of the protocol defined by this specification at the time of posting of this Internet-Draft, and is based on a proposal described in RFC 7942.
+        The description of implementations in this section is intended to assist the IETF in its decision processes in progressing drafts to RFCs.
+        Please note that the listing of any individual implementation here does not imply endorsement by the IETF.
+        Furthermore, no effort has been spent to verify the information presented here that was supplied by IETF contributors.
+        This is not intended as, and must not be construed to be, a catalog of available implementations or their features.
+        Readers are advised to note that other implementations may exist.
+      </t>
+      <t>
+        According to RFC 7942, "this will allow reviewers and working groups to assign due consideration to documents that have the benefit of running code, which may serve as evidence of valuable experimentation and feedback that have made the implemented protocols more mature.
+        It is up to the individual working groups to use this information as they see fit".
+      </t>
+      <ul>
+        <li>
+          A validator implementation <xref target="rpki-client"/> (version 8.5 and higher), written in C was provided by Job Snijders from Fastly.
+        </li>
+        <li>
+          A validator implementation <xref target="routinator"/>, written in Rust was provided by Martin Hoffman from NLnet Labs.
+        </li>
+        <li>
+          A validator implementation <xref target="rpki-prover"/>, written in Haskell was provided by Mikhail Puzanov.
+        </li>
+        <li>
+          A Signer implementation <xref target="rpki-aspa-demo"/> in Perl was reported on Tom Harrison from APNIC.
+        </li>
+        <li>
+          A signer implementation <xref target="rpki-commons"/> in Java was reported on by Ties de Kock from RIPE NCC.
+        </li>
+        <li>
+          A signer implementation <xref target="krill"/> in Rust was reported on by Tim Bruijnzeels from NLnet Labs.
+        </li>
+      </ul>
+    </section>
+-->
+    <section anchor="Acknowledgments" title="Acknowledgments">
+      <t>
+        The authors would like to thank the authors of <xref target="I-D.ietf-sidrops-aspa-profile"/> since that document was used as a template. 
+      </t>
+    </section>
+
+  </middle>
+
+  <back>
+
+    <references title="Normative References">
+
+      <?rfc include="reference.RFC.2119.xml"?>
+      <?rfc include="reference.RFC.3779.xml"?>
+      <?rfc include="reference.RFC.5652.xml"?>
+      <?rfc include="reference.RFC.6481.xml"?>
+      <?rfc include="reference.RFC.6485.xml"?>
+      <?rfc include="reference.RFC.6488.xml"?>
+      <?rfc include="reference.RFC.8174.xml"?>
+
+      <xi:include href="https://bib.ietf.org/public/rfc/bibxml3/reference.I-D.ietf-sidrops-aspa-verification.xml"/>
+      <xi:include href="https://bib.ietf.org/public/rfc/bibxml3/reference.I-D.ietf-sidrops-aspa-profile.xml"/>
+  
+      <reference anchor="X.680">
+        <front>
+          <title>Information technology - Abstract Syntax Notation One (ASN.1): Specification of basic notation</title>
+          <author>
+            <organization>ITU-T</organization>
+          </author>
+          <date year="2021"/>
+        </front>
+        <seriesInfo name="ITU-T" value="Recommendation X.680"/>
+      </reference>
+
+      <reference anchor="X.690">
+        <front>
+          <title>Information Technology - ASN.1 encoding rules: Specification of Basic Encoding Rules (BER), Canonical Encoding Rules (CER) and Distinguished Encoding Rules (DER)</title>
+          <author>
+            <organization>ITU-T</organization>
+          </author>
+          <date year="2021"/>
+        </front>
+        <seriesInfo name="ITU-T" value="Recommendation X.690"/>
+      </reference>
+
+    </references>
+
+    <references title="Informative References">
+
+      <?rfc include="reference.RFC.4648.xml"?>
+      <?rfc include="reference.RFC.6480.xml"?>
+      <?rfc include="reference.RFC.7947.xml"?>
+<!--
+      <reference anchor="rpki-client" target="https://marc.info/?l=openbsd-tech&amp;m=168614057916956&amp;w=2">
+        <front>
+          <title>rpki-client</title>
+          <author initials="J." surname="Snijders">
+            <organization>Fastly</organization>
+          </author>
+          <date year="2023"/>
+        </front>
+      </reference>
+      <reference anchor="rpki-aspa-demo" target="https://github.com/APNIC-net/rpki-aspa-demo">
+        <front>
+          <title>rpki-aspa-demo</title>
+          <author initials="T." surname="Harrison">
+            <organization>APNIC</organization>
+          </author>
+          <date year="2023"/>
+        </front>
+      </reference>
+
+      <reference anchor="rpki-commons" target="https://mailarchive.ietf.org/arch/msg/sidrops/nNAmZMrr7t9NMzm12jRXU03ABN4/">
+        <front>
+          <title>rpki-commons</title>
+          <author initials="T." surname="de Kock">
+            <organization>RIPE NCC</organization>
+          </author>
+          <date year="2023"/>
+        </front>
+      </reference>
+
+      <reference anchor="krill" target="https://mailarchive.ietf.org/arch/msg/sidrops/RrHCYTmevxDHgebdLC_adRlKH-o/">
+        <front>
+          <title>krill</title>
+          <author initials="T." surname="Bruijnzeels">
+            <organization>NLnet Labs</organization>
+          </author>
+          <date year="2023"/>
+        </front>
+      </reference>
+      <reference anchor="rpki-prover" target="https://github.com/lolepezy/rpki-prover/compare/master...aspa-profile-16">
+        <front>
+          <title>rpki-prover</title>
+          <author initials="M." surname="Puzanov"/>
+          <date year="2023"/>
+        </front>
+      </reference>
+
+      <reference anchor="routinator" target="https://github.com/NLnetLabs/rpki-rs/pull/264">
+        <front>
+          <title>routinator</title>
+          <author initials="M." surname="Hoffman">
+            <organization>NLnet Labs</organization>
+          </author>
+          <date year="2023"/>
+        </front>
+      </reference>
+-->
+    </references>
+<!--
+    <section anchor="example">
+      <name>Example ASRA eContent Payload</name>
+      <t>
+        Below an example of a DER encoded ASRA eContent is provided with annotation following the '#' character.
+      </t>
+      <artwork>
+<![CDATA[
+$ echo 301da00302010102023cca301202020b620202205b020300c790020303259e \
+  | xxd -r -ps | openssl asn1parse -inform DER -dump -i
+    0:d=0  hl=2 l=  29 cons: SEQUENCE
+    2:d=1  hl=2 l=   3 cons:  cont [ 0 ]
+    4:d=2  hl=2 l=   1 prim:   INTEGER           :01
+    7:d=1  hl=2 l=   2 prim:  INTEGER           :3CCA    # Customer ASID 15562
+   11:d=1  hl=2 l=  18 cons:  SEQUENCE
+   13:d=2  hl=2 l=   2 prim:   INTEGER           :0B62   # ProviderAS 2914
+   17:d=2  hl=2 l=   2 prim:   INTEGER           :205B   # ProviderAS 8283
+   21:d=2  hl=2 l=   3 prim:   INTEGER           :C790   # ProviderAS 51088
+   26:d=2  hl=2 l=   3 prim:   INTEGER           :03259E # ProviderAS 206238
+]]>
+      </artwork>
+
+      <t>
+        Below is a complete <xref target="RFC4648">Base64</xref> encoded RPKI ASRA Signed Object.
+      </t>
+      <artwork>
+<![CDATA[
+MIIGoQYJKoZIhvcNAQcCoIIGkjCCBo4CAQMxDTALBglghkgBZQMEAgEwMAYLKoZIhvcNAQkQ
+ATGgIQQfMB2gAwIBAQICPMowEgICC2ICAiBbAgMAx5ACAwMlnqCCBJgwggSUMIIDfKADAgEC
+AgoAocd1L/ix0uAfMA0GCSqGSIb3DQEBCwUAMDMxMTAvBgNVBAMTKGNhYTgwNWRiYWMzNjQ3
+NDliOWIxMTU1OTBhYjZlZjBmOTcwY2RiZDgwHhcNMjMwNjA3MDkwODE0WhcNMjQwNjA2MDkw
+ODE0WjAVMRMwEQYDVQQDDAoxNjg2MTI4MDAzMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+CgKCAQEA9YsEEF6Mb6Rhj7W35W9F8vT9OnGpMopJDL9y05Tms49iQ5hnZKXiabmwPKEn9Uat
+QU4Klff/2XkFXrjnmGcA/jb5C/22JlM1WRZcFfKwJXGWBf9HW2qlz9KTKT07vkFFp8+H6NTu
+MPX/nuEFFMlgWVV/dS5x5gjFuGmhBpXiKhIiNAhTqFdXQwJoI3BCngt4G4rLhu0zHsAH9/El
+s4XWk57HoKScj2mKAoHMWrLJxC9BRiqVXfZ7xAbuYDnrHFuGpZKp+BCB4mVJIT/a5LnUH/kp
+6Dih5833FbWZ0Au9pKqUBYD7J0QT/LGqvHSTX0zS9xGr5z3vg8glCecoAOIylQIDAQABo4IB
+xjCCAcIwDgYDVR0PAQH/BAQDAgeAMB0GA1UdDgQWBBTmbzR/BjCz/cWIUPsmJCMCpnVFhDAf
+BgNVHSMEGDAWgBTKqAXbrDZHSbmxFVkKtu8Plwzb2DAYBgNVHSABAf8EDjAMMAoGCCsGAQUF
+Bw4CMBkGCCsGAQUFBwEIAQH/BAowCKAGMAQCAjzKMGQGCCsGAQUFBwEBBFgwVjBUBggrBgEF
+BQcwAoZIcnN5bmM6Ly9ycGtpLnJpcGUubmV0L3JlcG9zaXRvcnkvREVGQVVMVC95cWdGMjZ3
+MlIwbTVzUlZaQ3JidkQ1Y00yOWcuY2VyMGQGA1UdHwRdMFswWaBXoFWGU3JzeW5jOi8vY2hs
+b2Uuc29ib3Jub3N0Lm5ldC9ycGtpL1JJUEUtbmxqb2JzbmlqZGVycy95cWdGMjZ3MlIwbTVz
+UlZaQ3JidkQ1Y00yOWcuY3JsMG8GCCsGAQUFBwELBGMwYTBfBggrBgEFBQcwC4ZTcnN5bmM6
+Ly9jaGxvZS5zb2Jvcm5vc3QubmV0L3Jwa2kvUklQRS1ubGpvYnNuaWpkZXJzLzVtODBmd1l3
+c18zRmlGRDdKaVFqQXFaMVJZUS5hc2EwDQYJKoZIhvcNAQELBQADggEBADMA9gmyYb+tw623
+Y0hiwMkfh8UIWBLl8TzuE/oV1+lV1vMmoZN2DZvS0DTBGHyDJosSxCfFIVgiBxyZ4Hz+5Kz3
+p+SCiv+W4Xm4/2IR9KZpd4XFldvz0m82rtjadiD9pP2pEoQ7hpv/QjJwWA2Lo8BgSUTF6x/E
+1nIhvLqmQTNyW/McSIyT3zctekg2lJVYUhIgMdO7HI0gzDKY8iPcTTGa9hzQBt5r0j1ukfgy
+9mRnLB6u1v6qa1VKIgxsCO5r4X4ClvQeFdhgx1XqZ2YAB0fhfK+ouIk52gIXnfDD6T3O1wU7
+3bNDRqNBPb3B6fGV+XtAszI4lzQcgmWz1Vel7EExggGqMIIBpgIBA4AU5m80fwYws/3FiFD7
+JiQjAqZ1RYQwCwYJYIZIAWUDBAIBoGswGgYJKoZIhvcNAQkDMQ0GCyqGSIb3DQEJEAExMBwG
+CSqGSIb3DQEJBTEPFw0yMzA2MDcwOTA4NDFaMC8GCSqGSIb3DQEJBDEiBCAJcXvBATD7chRb
+oBj7Kghjf+uaiuybzdAcFPCzBXweYDANBgkqhkiG9w0BAQEFAASCAQDRbk4QaP0AdYgtgxds
+3T/qgz0+m0RT2ue/5vqnhqCIqJBUjjrVOi2kgR3xhXFJfwz0pMuvUD6ikMdb9OsjvkpGqprN
+xepbslSGf2OrrYHa36qF38KsXrPNASslNDCn7eN/TBoOV+8tacOFcPEyC7stuFw5GtvL37RS
+/ZvyDm8NMo06JynhZ2me3sTJVpqTopv0vqVQi0VLCNEq+CQiDPEdqGEVDT9y2dVIVZ3J54Lq
+v76sXvhswso7CpMzTJyEx2VcIXwADMKZF/nWciTrkNzLfahVsL6UzflvMqNo3nVYJIsnF6U3
+O3Niq7vO05r1PyS/pZqe+uwbV2gGQMcXwrvt
+]]>
+      </artwork>
+    <t>
+      The above should decode as following:
+    </t>
+    <artwork>
+<![CDATA[
+Object SHA256 hash:          s25yLaks3OXBzJcW3ZgvlLDiPUpyZbQk2jDHaPDgn1w=
+EE Subject key identifier:   E6:6F:34:7F:06:30:B3:FD:C5:88:50:FB:26:24:23:02:A6:75:45:84
+EE Certificate issuer:       /CN=caa805dbac364749b9b115590ab6ef0f970cdbd8
+EE Certificate serial:       A1C7752FF8B1D2E01F
+EE Authority key identifier: CA:A8:05:DB:AC:36:47:49:B9:B1:15:59:0A:B6:EF:0F:97:0C:DB:D8
+EE Authority info access:    rsync://rpki.ripe.net/repository/DEFAULT/yqgF26w2R0m5sRVZCrbvD5cM29g.cer
+EE Subject info access:      rsync://chloe.sobornost.net/rpki/RIPE-nljobsnijders/5m80fwYws_3FiFD7JiQjAqZ1RYQ.asa
+CMS Signing time:            Wed 07 Jun 2023 09:08:41 +0000
+EE notBefore:                Wed 07 Jun 2023 09:08:14 +0000
+EE notAfter:                 Thu 06 Jun 2024 09:08:14 +0000
+
+ASRA eContent:
+  Customer AS:               15562
+  Provider Set:              1: AS: 2914
+                             2: AS: 8283
+                             3: AS: 51088
+                             4: AS: 206238
+]]>
+      </artwork>
+    </section>
+-->
+  </back>
+</rfc>
