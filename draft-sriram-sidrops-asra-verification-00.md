@@ -42,7 +42,7 @@ author:
 normative:
   I-D.ietf-sidrops-aspa-verification:
   I-D.ietf-sidrops-aspa-profile:
-
+  I-D.geng-sidrops-asra-profile:
 informative:
   I-D.ietf-sidrops-8210bis:
 ...
@@ -62,7 +62,7 @@ ASRA achieves this by allowing an AS to register additional AS relationships, i.
 Autonomous System Provider Authorization (ASPA) record authorizes provider ASes of a customer (subject) AS {{I-D.ietf-sidrops-aspa-profile}}.
 While ASPA-based AS_PATH verification can correctly detect and mitigate route leaks and some forged-origin or forged-path-segment hijacks, it fails to detect some malicious path manipulations for routes that are received from transit providers (see Appendix B and Section 9 of {{I-D.ietf-sidrops-aspa-verification}}).
 This document utilizes a new RPKI object called Autonomous System Relationship Authorization (ASRA) that significantly enhances AS_PATH verification complementing ASPA.
-The Cryptographic Message Syntax (CMS) protected content type for the RPKI ASRA object is defined in [I-D.geng-sidrops-asra-profile]. 
+The Cryptographic Message Syntax (CMS) protected content type for the RPKI ASRA object is defined in {{I-D.geng-sidrops-asra-profile}}. 
 ASRA fills in a significant gap in the ASPA method by adding the capability to detect fake links in the AS_PATHs in BGP Updates propagated from providers to customers.
 ASRA achieves this by allowing an AS to register additional AS relationships, i.e., customers and lateral peers.
 
@@ -178,7 +178,7 @@ The term "Compliant AS" or "compliant BGP router" in this document refers to one
 A compliant AS that has a valid ASRA record MUST also have a valid ASPA record.
 A valid ASRA record(s) for a signer (subject) AS that does not have a valid ASPA record MUST be ignored (considered unusable) for AS path verification purposes. 
 
-There are three subcategories of ASRAs defined: ASRA1, ASRA2, and ASRA3 [I-D.geng-sidrops-asra-profile].
+There are three subcategories of ASRAs defined: ASRA1, ASRA2, and ASRA3 {{I-D.geng-sidrops-asra-profile}}.
 They are distinguished by a subcategory field by setting its value to 1, 2, or 3, respectively.
 ASRA1 and ASRA2 are used to register the lists of customers and lateral peers, respectively.
 Alternatively, if the subject AS does not wish to separately disclose customers and lateral peers, it MAY choose to register an ASRA3 to register the combined list of customers and lateral peers.
