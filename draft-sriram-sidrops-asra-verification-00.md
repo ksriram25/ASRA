@@ -2,7 +2,7 @@
 title: Autonomous System Relationship Authorization (ASRA) as an Extension to ASPA for Enhanced AS Path Verification
 abbrev: Enhancement using ASPA and ASRA
 
-docname: draft-sriram-sidrops-asra-verification-00
+docname: draft-sriram-sidrops-asra-verification-01
 obsoletes:
 updates:
 date:
@@ -42,7 +42,7 @@ author:
 normative:
   I-D.ietf-sidrops-aspa-verification:
   I-D.ietf-sidrops-aspa-profile:
-
+  I-D.geng-sidrops-asra-profile:
 informative:
   I-D.ietf-sidrops-8210bis:
 ...
@@ -62,7 +62,7 @@ ASRA achieves this by allowing an AS to register additional AS relationships, i.
 Autonomous System Provider Authorization (ASPA) record authorizes provider ASes of a customer (subject) AS {{I-D.ietf-sidrops-aspa-profile}}.
 While ASPA-based AS_PATH verification can correctly detect and mitigate route leaks and some forged-origin or forged-path-segment hijacks, it fails to detect some malicious path manipulations for routes that are received from transit providers (see Appendix B and Section 9 of {{I-D.ietf-sidrops-aspa-verification}}).
 This document utilizes a new RPKI object called Autonomous System Relationship Authorization (ASRA) that significantly enhances AS_PATH verification complementing ASPA.
-The Cryptographic Message Syntax (CMS) protected content type for the RPKI ASRA object is defined in [I-D.sriram-sidrops-asra-profile]. 
+The Cryptographic Message Syntax (CMS) protected content type for the RPKI ASRA object is defined in {{I-D.geng-sidrops-asra-profile}}. 
 ASRA fills in a significant gap in the ASPA method by adding the capability to detect fake links in the AS_PATHs in BGP Updates propagated from providers to customers.
 ASRA achieves this by allowing an AS to register additional AS relationships, i.e., customers and lateral peers.
 
@@ -75,7 +75,8 @@ The algorithm is designed judiciously so that it introduces no vulnerability (or
 This is accomplished by the following principle in the design: Given AS(i) and AS(i+1) are two consecutive unique ASes in the AS path, an ASRA attestation from AS(i+1) to AS(i), i.e., ASRA in the direction opposite to the BGP Update flow, is given no consideration ({{Alg}}).
 -->
 
-Incremental benefit is accrued by early adopters. An AS that deploys ASPA and ASRA prevents an offending AS from faking a link to it, if the receiving/verifying AS (elsewhere in the Internet) also deploys ASPA and ASRA.
+Incremental benefit is accrued by early adopters. An AS that deploys ASPA and ASRA prevents an offending AS from faking a link to it if the receiving/verifying AS also deploys ASPA and ASRA. The fake link will be detected by the receiving AS even if no other AS in the received AS path has adopted ASPA or ASRA. 
+
 
 The reader is expected to be familiar with the following related documents: {{I-D.ietf-sidrops-aspa-profile}}, {{I-D.ietf-sidrops-aspa-verification}}, {{I-D.ietf-sidrops-8210bis}}.     
 
@@ -177,29 +178,41 @@ The term "Compliant AS" or "compliant BGP router" in this document refers to one
 A compliant AS that has a valid ASRA record MUST also have a valid ASPA record.
 A valid ASRA record(s) for a signer (subject) AS that does not have a valid ASPA record MUST be ignored (considered unusable) for AS path verification purposes. 
 
-There are three subcategories of ASRAs defined: ASRA1, ASRA2, and ASRA3 [I-D.sriram-sidrops-asra-profile].
+There are three subcategories of ASRAs defined: ASRA1, ASRA2, and ASRA3 {{I-D.geng-sidrops-asra-profile}}.
 They are distinguished by a subcategory field by setting its value to 1, 2, or 3, respectively.
 ASRA1 and ASRA2 are used to register the lists of customers and lateral peers, respectively.
 Alternatively, if the subject AS does not wish to separately disclose customers and lateral peers, it MAY choose to register an ASRA3 to register the combined list of customers and lateral peers.
 An ASRA-compliant AS MUST either register ASRA3 alone or register both ASRA1 and ASRA2.
 To signal that there are no neighbors to report in a subcategory, AS 0 MUST be included in the corresponding ASRA subcategory in the payload field.
-<!-- To signal that the AS does not wish to disclose certain type of neighbors (e.g., Customers), it MAY create an ASRA of the corresponding type and include a special AS number (TBD) in the payload field. -->
+<!-- To signal that the AS does not wish to disclose certain type of neighbors (e.g., Customers), it MAY create an ASRA of the corresponding type and include a special AS number (TBD) in the payload field. --> 
 
 If it is found that an AS has X.509 valid ASRA3 and simultaneously has X.509 valid ASRA1 and/or ASRA2, then only the ASRA3 MUST be considered for AS path verification and the ASRA subcategories ASRA1 and ASRA2 MUST be ignored.
 
 It is highly RECOMMENDED that an AS (compliant signer AS) register and maintain either a single ASRA3 object or a single object of each subcategory ASRA1 and ASRA2.
 Such a practice helps prevent race conditions during ASRA updates.
-If multiple X.509 valid ASRAs of a subcategory exist for given subject AS, the ASes listed in all such ASRAs are combined into one list of neighbors of the subcategory in consideration.
+If multiple X.509 valid ASRAs of a subcategory exist for given subject AS, the ASes listed in all such ASRAs will be combined (by the relying party) into one list of neighbors of the subcategory in consideration.
 This combined list will be used for AS path verification purposes.
+
+All neighbors that are customers or lateral peers of the signer AS MUST be included in an ASRA(s) of an appropriate subcategory following above-mentioned recommendations.
 
 A pair of compliant ASes in a mutual transit relationship are required to include each other in their respective ASPA (per {{I-D.ietf-sidrops-aspa-verification}}).
 They MUST NOT further include each other in ASRA1, ASRA2, or ASRA3.
-A compliant AS that has a complex relationship with a neighbor AS where one of the relationships is Provider is required to include the other AS in its ASPA (per {{I-D.ietf-sidrops-aspa-verification}}).
+A compliant AS that has a complex relationship with a neighbor AS where one of the relationships is Provider is required to include the neighbor AS in its ASPA (per {{I-D.ietf-sidrops-aspa-verification}}).
+(Note: By the term "relationship is foo" it is meant here that the neighbor is foo.)
 The AS MUST NOT further include the other AS in ASRA1, ASRA2, or ASRA3.
 A compliant AS that has a complex relationship with a neighbor AS where none of the relationships are Provider implies that its relationships with the neighbor AS are customer and lateral peer.
-In such a case, the AS MUST include the neighbor AS in its ASRA3 if doing ASRA3, otherwise in its ASRA1 as well as ASRA2. 
+In such a case, the AS MUST include the neighbor AS in its ASRA3 if doing ASRA3, otherwise in its ASRA1 as well as ASRA2.
 
 The Route Server (RS) to RS-client relationship is similar to the provider-to-customer relationship. So, a compliant non-transparent RS AS MUST either (1) list all its RS-clients as customers in ASRA3, or (2) list all its RS-clients as customers in ASRA1 and register an ASRA2 with only AS 0 listed in the set of lateral peers.
+
+*Transparent RS AS case:* 
+Typically, an IX RS publishes a list of all RS clients it has so that each RS client can choose which other clients to peer with.
+This is done by using BGP Community tags or through policies configured at the RS AS.
+In the case of a transparent RS AS, the peering between any pair of clients is in effect lateral peering (note that the RS AS is absent in the AS_PATH).
+A compliant RS client of a transparent RS AS MUST include in the ASRA all the AS numbers of other RS clients that it has selected to peer with at the RS.
+If a compliant RS client has selected to receive all routes from a transparent RS, then the RS client MUST include in the ASRA the full published list of RS clients of the transparent RS.
+
+Authors' note: The possibility of defining an ASRA type using which a transparent RS AS can register all its RS clients will be considered in case it proves useful. It may be useful at least for cross-checks on peering relationships registered by RS clients.  
 
 # Algorithms for Enhancement of AS Path Verification Using ASRA {#Alg}
 
@@ -338,7 +351,7 @@ Every AS operator doing ASPA/ASRA SHOULD periodically check their own ASPA/ASRA 
 
 Every AS operator doing ASPA SHOULD periodically monitor all the ASPAs in the RPKI repositories to check if their AS number is incorrectly included as a provider in an ASPA (X.509 valid), and if so, they SHOULD report it to the responsible party (or parties) so that the ASPA can be rectified.
 
-Every AS operator doing ASPA SHOULD periodically monitor all the ASPAs in the RPKI repositories to check if their AS number is incorrectly not included as a provider in the ASPA of their own customer AS (CAS), and if so, they SHOULD report it to the CAS operator so that the ASPA can be rectified.
+Every AS operator doing ASPA SHOULD periodically monitor all the ASPAs in the RPKI repositories to check if their AS number is incorrectly not included as a provider in the ASPA of a customer AS (CAS), and if so, they SHOULD report it to the CAS operator so that the ASPA can be rectified.
 
 Every AS operator doing ASRA SHOULD periodically monitor all the ASRAs in the RPKI repositories to check if their AS number is incorrectly included (or incorrectly not included) in an ASRA (X.509 valid), and if so, they SHOULD report it to the responsible party (or parties) so that the ASRA can be rectified.
     
@@ -355,4 +368,3 @@ This document does not have IANA considerations.
 The authors wish to thank Mingqing (Michael) Huang, Jeff Haas, Doug Montgomery, and Oliver Borchert for very helpful comments and discussions.
 
 --- back
-
