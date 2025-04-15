@@ -207,12 +207,12 @@ The Route Server (RS) to RS-client relationship is similar to the provider-to-cu
 
 *Transparent RS AS case:* 
 Typically, an IX RS publishes a list of all RS clients it has so that each RS client can choose which other clients to peer with.
-This is done by using BGP Community tags or through policies configured at the RS AS.
-In the case of a transparent RS AS, the peering between any pair of clients is in effect lateral peering (note that the RS AS is absent in the AS_PATH).
+The peering relationships are set up  by using BGP Community tags or through policies configured at the RS AS.
+In the case of a transparent RS AS, the peering between any pair of clients is effectively lateral peering (note that the RS AS is absent in the AS_PATH).
 A compliant RS client of a transparent RS AS MUST include in the ASRA all the AS numbers of other RS clients that it has selected to peer with at the RS.
 If a compliant RS client has selected to receive all routes from a transparent RS, then the RS client MUST include in the ASRA the full published list of RS clients of the transparent RS.
 
-Authors' note: The possibility of defining an ASRA type using which a transparent RS AS can register all its RS clients will be considered in case it proves useful. It may be useful at least for cross-checks on peering relationships registered by RS clients.  
+Authors' note: The possibility of defining an ASRA type using which a transparent RS AS can register all its RS clients will be considered in case it adds value. It may be useful at least for cross-checking the peering relationships registered by RS clients.
 
 # Algorithms for Enhancement of AS Path Verification Using ASRA {#Alg}
 
@@ -365,6 +365,6 @@ This document does not have IANA considerations.
 
 # Acknowledgements
 
-The authors wish to thank Mingqing (Michael) Huang, Jeff Haas, Doug Montgomery, and Oliver Borchert for very helpful comments and discussions.
+The authors wish to thank Mingqing (Michael) Huang, Alexander Azimov, Jeff Haas, Doug Montgomery, and Oliver Borchert for very helpful comments and discussions.
 
 --- back
