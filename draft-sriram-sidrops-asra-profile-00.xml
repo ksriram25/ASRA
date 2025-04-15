@@ -11,7 +11,7 @@
 
 <rfc xmlns:xi="http://www.w3.org/2001/XInclude"
      category="std"
-     docName="draft-sriram-sidrops-asra-profile-00"
+     docName="draft-geng-sidrops-asra-profile-01"
      ipr="trust200902"
      consensus="true"
      submissionType="IETF">
@@ -108,8 +108,9 @@
         There are three subcategories of ASRAs defined: ASRA1, ASRA2, and ASRA3.
         They are distinguished by a subcategory field by setting its value to 1, 2, or 3, respectively.
         ASRA1 and ASRA2 are used to register the lists of customers and lateral peers, respectively.
-        Alternatively, if the subject AS does not wish to separately disclose customers and lateral peers, it MAY choose to register an ASRA3 to register the combined list of customers and lateral peers.
-        The details of ASRA registration requirements for ASes in different scenarios are specified in Section 3 of [I-D.sriram-sidrops-asra-verification].
+        Alternatively, if the subject AS does not wish to separately disclose customers and lateral peers, it has the option to register an ASRA3 to register the combined list of customers and lateral peers.
+        The details of ASRA registration requirements for ASes in different scenarios are specified in Section 3 of <!-- [I-D.sriram-sidrops-asra-verification]-->
+        <xref target="I-D.sriram-sidrops-asra-verification"/>.
         In addition, the procedures for verifying AS_PATHs in BGP UPDATE messages using validated ASRA objects (in conjunction with the ASPA objects) are described in that document.   
       </t>
       <t>
@@ -143,7 +144,7 @@
         The content of an ASRA identifies the signer (subject) AS as well as the Set of  ASes that are authorized by the signer AS to be its customers and/or lateral peers.
       </t>
       <t>
-        A user registering ASRA(s) must be cognizant of Section 3 of [I-D.sriram-sidrops-asra-verification] and the user (or their software tool) must comply with the ASRA registration recommendations in that section.
+        A user registering ASRA(s) must be cognizant of Section 3 of <!--[I-D.sriram-sidrops-asra-verification]--> <xref target="I-D.sriram-sidrops-asra-verification"/> and the user (or their software tool) must comply with the ASRA registration recommendations in that section.
         In the case of the transition process between different CA registries, the ASRA records SHOULD be kept identical in all registries in terms of their authorization contents.
       </t>
 
@@ -212,7 +213,7 @@ END
           As explained in <xref target="intro"/>, ASRA1 means that the Relationships (see <xref target="relationships"/>) field contains ASIDs of only the customer ASes of the Signer AS; 
           ASRA2 means that the Relationships field contains ASIDs of only the lateral peer ASes; 
           ASRA3 means that the Relationships field contains the combined list of ASIDs of customer and lateral peer ASes.
-          Section 3 of [I-D.sriram-sidrops-asra-verification] for details of registration requirements for ASRA1, ASRA2, and ASRA3.
+          Section 3 of <!--[I-D.sriram-sidrops-asra-verification]--> <xref target="I-D.sriram-sidrops-asra-verification"/> for details of registration requirements for ASRA1, ASRA2, and ASRA3.
         </t>
       </section>
 
@@ -265,7 +266,8 @@ END
 <artwork type="text">
     Decimal   | Description                   | Specification 
     ----------------------------------------------------------
-    TBD2      | id-mod-rpki-asra-2024         | [RFC-to-be]   
+    TBD2      | id-mod-rpki-asra-2024         | [RFC-to-be]
+    ----------------------------------------------------------
 </artwork>
         </figure>
     </section>
@@ -278,6 +280,7 @@ END
     Decimal   | Description                   | Specification
     ----------------------------------------------------------
     TBD       | id-ct-ASRA                    | [RFC-to-be]
+    ----------------------------------------------------------
 </artwork>
       </figure>
     </section>
@@ -287,11 +290,11 @@ END
       </t>
       <figure>
 <artwork type="text">
-Name                       | OID                         | Specification
--------------------------------------------------------------------------
-Autonomous System          | 1.2.840.113549.1.9.16.1.TBD | [RFC-to-be]
-Relationship Authorization |                             |
-------------------------------------------------------------------------
+Name                      | OID                        |Specification
+---------------------------------------------------------------------
+Autonomous System         | 1.2.840.113549.1.9.16.1.TBD|[RFC-to-be]
+Relationship Authorization|                            |
+---------------------------------------------------------------------
 </artwork>
       </figure>
     </section>
@@ -304,8 +307,9 @@ Relationship Authorization |                             |
 <![CDATA[
 Filename  |
 Extension | RPKI Object                                  | Reference   
------------------------------------------------------------------------
-     .asa | Autonomous System Relationship Authorization | [RFC-to-be] 
+----------------------------------------------------------------------
+     .asa | Autonomous System Relationship Authorization | [RFC-to-be]
+---------------------------------------------------------------------- 
 ]]>
                 </artwork>
       </figure>
@@ -408,6 +412,7 @@ Extension | RPKI Object                                  | Reference
 
       <xi:include href="https://bib.ietf.org/public/rfc/bibxml3/reference.I-D.ietf-sidrops-aspa-verification.xml"/>
       <xi:include href="https://bib.ietf.org/public/rfc/bibxml3/reference.I-D.ietf-sidrops-aspa-profile.xml"/>
+      <xi:include href="https://bib.ietf.org/public/rfc/bibxml3/reference.I-D.sriram-sidrops-asra-verification.xml"/>
   
       <reference anchor="X.680">
         <front>
