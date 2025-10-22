@@ -19,7 +19,7 @@ author:
   ins: K. Sriram
   name: Kotikalapudi Sriram
   organization: NIST
-  email: ksriram@nist.gov
+  email: sriram.ietf@gmail.com
   city: Gaithersburg, MD 20899
   country: United States of America
 
